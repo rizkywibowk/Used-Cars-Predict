@@ -5,10 +5,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 import re
+
+# --- FUNGSI GLOBAL UNTUK EKSTRAKSI HP DAN LITER ---
+def extract_hp(x):
+    if pd.isnull(x): return np.nan
+    hp = re.findall(r'(\d{2,4})\.?0?HP', str(x))
+    return float(hp[0]) if hp else np.nan
+
+def extract_L(x):
+    if pd.isnull(x): return np.nan
+    l = re.findall(r'(\d\.\d+)L', str(x))
+    return float(l[0]) if l else np.nan
 
 # 1. LOAD DATA
 @st.cache_data
@@ -28,14 +37,6 @@ def clean_preprocess(df):
     # Car age
     df['car_age'] = 2025 - df['model_year']
     # Clean engine_hp & engine_L
-    def extract_hp(x):
-        if pd.isnull(x): return np.nan
-        hp = re.findall(r'(\d{2,4})\.?0?HP', x)
-        return float(hp[0]) if hp else np.nan
-    def extract_L(x):
-        if pd.isnull(x): return np.nan
-        l = re.findall(r'(\d\.\d+)L', x)
-        return float(l[0]) if l else np.nan
     df['engine_hp'] = df['engine'].apply(extract_hp)
     df['engine_L'] = df['engine'].apply(extract_L)
     # Clean accident_reported & has_clean_title
@@ -144,8 +145,8 @@ if submitted:
     input_dict = {
         'car_age': car_age,
         'milage': milage,
-        'engine_hp': engine_hp if engine_hp is not None else df['engine_hp'].mean(),
-        'engine_L': engine_L if engine_L is not None else df['engine_L'].mean(),
+        'engine_hp': engine_hp if not np.isnan(engine_hp) else df['engine_hp'].mean(),
+        'engine_L': engine_L if not np.isnan(engine_L) else df['engine_L'].mean(),
         'accident_reported': accident_reported_bin,
         'has_clean_title': has_clean_title_bin,
     }
@@ -179,12 +180,4 @@ feat_imp = pd.Series(importances, index=features).sort_values(ascending=False).h
 fig2, ax2 = plt.subplots()
 feat_imp.plot(kind='barh', ax=ax2)
 st.pyplot(fig2)
-st.markdown("Fitur yang paling berpengaruh: " + ", ".join(feat_imp.index[:3]))
-
-# --- Insight
-st.header("Insight & Rekomendasi")
-st.markdown("""
-- Mobil lebih muda, mileage rendah, dan mesin bertenaga tinggi cenderung lebih mahal.
-- Brand premium memiliki harga rata-rata lebih tinggi.
-- Gunakan aplikasi ini untuk estimasi harga sebelum membeli/menjual mobil bekas.
-""")
+st.markdown("Fitur yang paling berpengaruh: "

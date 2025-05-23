@@ -7,8 +7,8 @@ Aplikasi Streamlit untuk prediksi harga mobil bekas berbasis machine learning.
 1. Install dependensi:
 2. pip install -r requirements.txt
 
-text
-2. Jalankan aplikasi:
+
+3. Jalankan aplikasi:
 streamlit run app.py
 
 text

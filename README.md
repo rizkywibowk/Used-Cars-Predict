@@ -11,6 +11,5 @@ Aplikasi Streamlit untuk prediksi harga mobil bekas berbasis machine learning.
 3. Jalankan aplikasi:
 streamlit run app.py
 
-text
 
 Dataset: used_cars.csv

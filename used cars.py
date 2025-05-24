@@ -181,3 +181,12 @@ fig2, ax2 = plt.subplots()
 feat_imp.plot(kind='barh', ax=ax2)
 st.pyplot(fig2)
 st.markdown("Fitur yang paling berpengaruh: ")
+
+# --- Insight
+st.header("Insight & Rekomendasi")
+st.markdown("""
+- Mobil lebih muda, mileage rendah, dan mesin bertenaga tinggi cenderung lebih mahal.
+- Brand premium memiliki harga rata-rata lebih tinggi.
+- Gunakan aplikasi ini untuk estimasi harga sebelum membeli/menjual mobil bekas.
+""")
+

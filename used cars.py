@@ -234,20 +234,25 @@ st.markdown("### 📝 Masukkan Spesifikasi Mobil Anda")
 with st.form("prediksi_form"):
     col1, col2 = st.columns(2)
     with col1:
-        brand_options = sorted(df_initial['brand'].dropna().unique()) # Dari df_initial agar opsi lengkap
+        brand_options = sorted(df_initial['brand'].dropna().unique())
         brand = st.selectbox("🚗 Merek Mobil", brand_options, help="Pilih merek mobil.")
         
-        model_input_key = "model_input_text"
-        model_in = st.text_input("모델 Model Mobil", key=model_input_key, help="Masukkan model mobil, contoh: Camry, Civic, F-150.")
+        model_input_key = "model_input_text" 
+        # TAMBAHKAN placeholder di sini
+        model_in = st.text_input(
+            "모델 Model Mobil", 
+            key=model_input_key, 
+            placeholder="Contoh: Camry, Civic, F-150", # Placeholder ditambahkan
+            help="Masukkan model mobil, contoh: Camry, Civic, F-150."
+        )
         
-        # Gunakan kolom _numeric dari df_initial untuk slider bounds yang sudah pasti angka
         min_year_val = df_initial['model_year_numeric'].dropna().min()
         max_year_val = df_initial['model_year_numeric'].dropna().max()
         min_year_slider = int(min_year_val) if pd.notna(min_year_val) else 1970
         max_year_slider = int(max_year_val) if pd.notna(max_year_val) else pd.Timestamp.now().year
         default_year_slider = 2020
         if not (min_year_slider <= default_year_slider <= max_year_slider):
-            default_year_slider = max_year_slider # Atau min_year_slider, sesuaikan
+            default_year_slider = max_year_slider
         model_year = st.slider("📅 Tahun Pembuatan", min_year_slider, max_year_slider, default_year_slider, help=f"Pilih tahun pembuatan mobil, antara {min_year_slider} dan {max_year_slider}.")
         
         milage_max_val_calc = df_initial['milage_numeric'].dropna().max()
@@ -255,13 +260,13 @@ with st.form("prediksi_form"):
         milage = st.number_input("🛣️ Jarak Tempuh (mil)", min_value=0, max_value=milage_max_slider, value=50000, step=1000, help="Masukkan total jarak tempuh mobil dalam mil.")
 
     with col2:
-        fuel_type_options = sorted(df_initial['fuel_type'].dropna().unique()) # Dari df_initial
+        fuel_type_options = sorted(df_initial['fuel_type'].dropna().unique())
         fuel_type = st.selectbox("⛽ Tipe Bahan Bakar", fuel_type_options, help="Pilih tipe bahan bakar mobil.")
         
-        transmission_options = sorted(df_initial['transmission'].dropna().unique()) # Dari df_initial
+        transmission_options = sorted(df_initial['transmission'].dropna().unique())
         transmission = st.selectbox("⚙️ Transmisi", transmission_options, help="Pilih jenis transmisi mobil.")
         
-        engine = st.text_input("🛠️ Deskripsi Mesin (Contoh: 300.0HP 3.7L V6 Cylinder Engine)", help="Masukkan deskripsi mesin, contoh: 2.0L I4 Turbo.")
+        engine = st.text_input("🛠️ Deskripsi Mesin (Contoh: 300.0HP 3.7L V6 Cylinder Engine)", placeholder="Contoh: 2.0L I4 Turbo atau 300HP V6", help="Masukkan deskripsi mesin, contoh: 2.0L I4 Turbo.") # Placeholder juga bisa ditambahkan di sini
         
         accident_reported = st.selectbox("💥 Riwayat Kecelakaan?", ["Tidak", "Ya"], help="Apakah mobil pernah dilaporkan mengalami kecelakaan?")
         
@@ -272,6 +277,8 @@ with st.form("prediksi_form"):
         submitted = st.form_submit_button("✨ Prediksi Harga Sekarang!")
 
 if submitted:
+    # Bagian ini (pembuatan user_input_display dan prediksi) TIDAK PERLU DIUBAH
+    # karena logika `model_in if model_in else "-"` sudah benar.
     with st.spinner("🔍 Menganalisis dan Memprediksi Harga..."):
         current_year_form = pd.Timestamp.now().year
         car_age_input = current_year_form - model_year
@@ -283,15 +290,14 @@ if submitted:
         engine_seg_input_data = {'engine': engine, 'fuel_type': fuel_type}
         engine_seg_input = engine_segment(engine_seg_input_data)
 
-        # --- BUAT DATAFRAME DARI INPUT PENGGUNA UNTUK DITAMPILKAN ---
         user_input_display = {
             'Merek': [brand],
-            'Model': [model_in if model_in else "-"], # Tampilkan "-" jika model kosong
+            'Model': [model_in if model_in else "-"], # Logika ini sudah benar
             'Tahun': [model_year],
-            'Jarak Tempuh (mil)': [f"{milage:,}"], # Format dengan koma
+            'Jarak Tempuh (mil)': [f"{milage:,}"],
             'Bahan Bakar': [fuel_type],
             'Transmisi': [transmission],
-            'Deskripsi Mesin': [engine if engine else "-"], # Tampilkan "-" jika deskripsi mesin kosong
+            'Deskripsi Mesin': [engine if engine else "-"],
             'Riwayat Kecelakaan': [accident_reported],
             'Clean Title': [has_clean_title],
             'Umur Mobil (Tahun)': [car_age_input],
@@ -301,15 +307,12 @@ if submitted:
         }
         df_user_input_display = pd.DataFrame(user_input_display)
         
-        # Tampilkan detail input pengguna dalam expander
         with st.expander("📋 Detail Input yang Anda Masukkan untuk Prediksi", expanded=True):
             st.dataframe(df_user_input_display, use_container_width=True, hide_index=True)
-            # atau st.table(df_user_input_display) jika ingin tampilan tabel statis
 
-        # --- PERSIAPAN INPUT UNTUK MODEL (TETAP SAMA) ---
         input_dict = {
             'car_age': car_age_input,
-            'milage': milage, # Gunakan nilai milage numerik asli untuk model
+            'milage': milage,
             'engine_hp': engine_hp_input if pd.notna(engine_hp_input) else X_train['engine_hp'].mean(),
             'engine_L': engine_L_input if pd.notna(engine_L_input) else X_train['engine_L'].mean(),
             'accident_reported': accident_reported_bin_input,
@@ -330,12 +333,12 @@ if submitted:
                 if col_in_model not in base_features:
                      input_dict[col_in_model] = 0
 
-        input_df_for_model = pd.DataFrame([input_dict])[X_train.columns] # DataFrame untuk model
+        input_df_for_model = pd.DataFrame([input_dict])[X_train.columns]
         
-        pred = model.predict(input_df_for_model) # Prediksi menggunakan input_df_for_model
+        pred = model.predict(input_df_for_model)
         
         st.markdown(f"<div class='stSuccess'>💰 Estimasi harga mobil bekas Anda: <strong>${pred[0]:,.2f}</strong></div>", unsafe_allow_html=True)
-
+        
 # --- Feature Importance ---
 # (Kode Feature Importance tetap sama seperti sebelumnya)
 st.markdown("### 🌟 Faktor Penentu Harga Mobil (Feature Importance)")

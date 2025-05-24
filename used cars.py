@@ -8,6 +8,45 @@ from sklearn.model_selection import train_test_split
 import joblib
 import re
 
+# CSS responsif untuk light & dark mode
+css_code = '''
+/* Light mode (default) */
+body, .main, .stApp {
+    background-color: #f2f6fc;
+    color: #0a3d62;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body, .main, .stApp {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+    }
+    .stButton>button {
+        background-color: #333333 !important;
+        color: #e0e0e0 !important;
+    }
+    .stTextInput>div>input, .stSelectbox>div>div>div {
+        background-color: #232323 !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #555555 !important;
+    }
+    .stSlider>div>div>div {
+        color: #e0e0e0 !important;
+    }
+    .stMarkdown, .stDataFrame, .stTable {
+        color: #e0e0e0 !important;
+        background-color: #232323 !important;
+    }
+    .st-bb, .st-cq, .st-cr, .st-cs, .st-ct {
+        background-color: #232323 !important;
+        color: #e0e0e0 !important;
+    }
+}
+'''
+
+st.markdown(f'<style>{css_code}</style>', unsafe_allow_html=True)
+
 # --- FUNGSI GLOBAL UNTUK EKSTRAKSI HP DAN LITER ---
 def extract_hp(x):
     if pd.isnull(x): return np.nan

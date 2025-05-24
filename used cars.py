@@ -29,20 +29,14 @@ df = load_data()
 
 # 2. CLEANING & FEATURE ENGINEERING
 def clean_preprocess(df):
-    # Clean price
     df['price'] = df['price'].astype(str).str.replace('[\$,]', '', regex=True).str.replace(',', '').astype(float)
-    # Clean milage
     df['milage'] = df['milage'].astype(str).str.replace('[\,mi. ]', '', regex=True).replace('-', np.nan)
     df['milage'] = pd.to_numeric(df['milage'], errors='coerce')
-    # Car age
     df['car_age'] = 2025 - df['model_year']
-    # Clean engine_hp & engine_L
     df['engine_hp'] = df['engine'].apply(extract_hp)
     df['engine_L'] = df['engine'].apply(extract_L)
-    # Clean accident_reported & has_clean_title
     df['accident_reported'] = df['accident'].apply(lambda x: 1 if 'accident' in str(x).lower() else 0)
     df['has_clean_title'] = df['clean_title'].apply(lambda x: 1 if str(x).strip().lower() == 'yes' else 0)
-    # Handle missing values
     for col in ['engine_hp', 'engine_L', 'milage', 'car_age']:
         df[col].fillna(df[col].mean(), inplace=True)
     for col in ['fuel_type', 'ext_col', 'int_col', 'brand', 'transmission']:
@@ -102,46 +96,58 @@ if not st.session_state.get('model_trained', False):
 else:
     model = joblib.load('rf_model.pkl')
 
-# 7. STREAMLIT APP LAYOUT
+# --- STYLING & HEADER
+st.markdown("""
+    <style>
+    .main {background-color: #f2f6fc;}
+    .stApp {background-color: #f2f6fc;}
+    .title {color: #0a3d62; font-size: 3em; font-weight: bold;}
+    .subtitle {color: #3c6382; font-size: 1.3em; margin-bottom: 10px;}
+    .footer {text-align: center; color: gray; margin-top: 40px;}
+    </style>
+""", unsafe_allow_html=True)
 
-st.title("Prediksi Harga Mobil Bekas")
-st.markdown("Aplikasi ini memprediksi harga mobil bekas berdasarkan spesifikasi mobil Anda. Data diambil dari lebih dari 400.000 mobil bekas berbagai merek dan tipe.")
+st.markdown('<h1 class="title">🚗 Prediksi Harga Mobil Bekas</h1>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Aplikasi prediksi harga mobil bekas berbasis Machine Learning. Data lebih dari 400.000 mobil berbagai merek & tipe.</div>', unsafe_allow_html=True)
 
 # --- Sidebar: Eksplorasi Data
-st.sidebar.header("Eksplorasi Data")
+st.sidebar.header("🔎 Eksplorasi Data")
 if st.sidebar.checkbox("Tampilkan Dataframe"):
-    st.dataframe(df.head(100))
+    st.dataframe(df.head(100), use_container_width=True)
 
 st.sidebar.subheader("Distribusi Harga")
-fig, ax = plt.subplots()
-sns.histplot(df['price'], bins=50, ax=ax)
+fig, ax = plt.subplots(figsize=(6,3))
+sns.histplot(df['price'], bins=50, ax=ax, color="#0a3d62")
+ax.set_xlabel('Harga Mobil')
+ax.set_ylabel('Jumlah')
 st.sidebar.pyplot(fig)
 
 # --- Main: Form Prediksi
-st.header("Prediksi Harga Mobil Bekas")
+st.markdown("### 📝 Form Prediksi Harga")
 with st.form("prediksi_form"):
-    brand = st.selectbox("Brand", sorted(df['brand'].unique()))
-    model_in = st.text_input("Model", "")
-    model_year = st.slider("Tahun Mobil", int(df['model_year'].min()), int(df['model_year'].max()), 2020)
-    milage = st.number_input("Jarak Tempuh (mil)", min_value=0, max_value=500000, value=50000)
-    fuel_type = st.selectbox("Tipe Bahan Bakar", sorted(df['fuel_type'].unique()))
-    transmission = st.selectbox("Transmisi", sorted(df['transmission'].unique()))
-    ext_col = st.selectbox("Warna Eksterior", sorted(df['ext_col'].unique()))
-    int_col = st.selectbox("Warna Interior", sorted(df['int_col'].unique()))
-    engine = st.text_input("Deskripsi Mesin", "")
-    accident_reported = st.selectbox("Pernah Kecelakaan?", ["Tidak", "Ya"])
-    has_clean_title = st.selectbox("Clean Title?", ["Tidak", "Ya"])
-    submitted = st.form_submit_button("Prediksi Harga")
+    col1, col2 = st.columns(2)
+    with col1:
+        brand = st.selectbox("Brand", sorted(df['brand'].unique()))
+        model_in = st.text_input("Model", "")
+        model_year = st.slider("Tahun Mobil", int(df['model_year'].min()), int(df['model_year'].max()), 2020)
+        milage = st.number_input("Jarak Tempuh (mil)", min_value=0, max_value=500000, value=50000)
+    with col2:
+        fuel_type = st.selectbox("Tipe Bahan Bakar", sorted(df['fuel_type'].unique()))
+        transmission = st.selectbox("Transmisi", sorted(df['transmission'].unique()))
+        ext_col = st.selectbox("Warna Eksterior", sorted(df['ext_col'].unique()))
+        int_col = st.selectbox("Warna Interior", sorted(df['int_col'].unique()))
+        engine = st.text_input("Deskripsi Mesin", "")
+        accident_reported = st.selectbox("Pernah Kecelakaan?", ["Tidak", "Ya"])
+        has_clean_title = st.selectbox("Clean Title?", ["Tidak", "Ya"])
+    submitted = st.form_submit_button("Prediksi Harga 🚙")
 
 if submitted:
-    # Feature engineering input
     car_age = 2025 - model_year
     engine_hp = extract_hp(engine)
     engine_L = extract_L(engine)
     accident_reported_bin = 1 if accident_reported == "Ya" else 0
     has_clean_title_bin = 1 if has_clean_title == "Ya" else 0
     engine_seg = engine_segment({'engine': engine, 'fuel_type': fuel_type})
-    # Build input DataFrame
     input_dict = {
         'car_age': car_age,
         'milage': milage,
@@ -150,7 +156,6 @@ if submitted:
         'accident_reported': accident_reported_bin,
         'has_clean_title': has_clean_title_bin,
     }
-    # One-hot encoding manual
     for col in features:
         if col.startswith('brand_'):
             input_dict[col] = 1 if col == f'brand_{brand}' else 0
@@ -164,29 +169,36 @@ if submitted:
             input_dict[col] = 1 if col == f'int_col_{int_col}' else 0
         elif col.startswith('engine_segment_'):
             input_dict[col] = 1 if col == f'engine_segment_{engine_seg}' else 0
-    # Pastikan semua kolom ada
     for col in features:
         if col not in input_dict:
             input_dict[col] = 0
     input_df = pd.DataFrame([input_dict])
-    # Predict
-    pred = model.predict(input_df)[0]
-    st.success(f"Estimasi harga mobil bekas Anda: ${pred:,.2f}")
+    pred = model.predict(input_df)
+    st.success(f"💰 Estimasi harga mobil bekas Anda: **${pred[0]:,.2f}**")
 
 # --- Feature Importance
-st.header("Feature Importance")
+st.markdown("### 🌟 Feature Importance")
 importances = model.feature_importances_
 feat_imp = pd.Series(importances, index=features).sort_values(ascending=False).head(10)
-fig2, ax2 = plt.subplots()
-feat_imp.plot(kind='barh', ax=ax2)
+fig2, ax2 = plt.subplots(figsize=(8,5))
+sns.barplot(x=feat_imp.values, y=feat_imp.index, ax=ax2, palette="Blues_r")
+ax2.set_xlabel('Tingkat Pengaruh')
+ax2.set_ylabel('Fitur')
+ax2.set_title('10 Fitur Paling Berpengaruh')
 st.pyplot(fig2)
-st.markdown("Fitur yang paling berpengaruh: ")
+
+st.markdown("#### Penjelasan Angka pada Fitur Importance:")
+for feature, importance in feat_imp.items():
+    st.markdown(f"- **{feature}**: Memberikan kontribusi sebesar **{importance:.4f}** terhadap prediksi harga mobil. Semakin tinggi nilainya, semakin besar pengaruh fitur tersebut dalam menentukan harga.")
 
 # --- Insight
-st.header("Insight & Rekomendasi")
-st.markdown("""
-- Mobil lebih muda, mileage rendah, dan mesin bertenaga tinggi cenderung lebih mahal.
+st.markdown("### 💡 Insight & Rekomendasi")
+st.info("""
+- Mobil lebih muda, milage rendah, dan mesin bertenaga tinggi cenderung lebih mahal.
 - Brand premium memiliki harga rata-rata lebih tinggi.
 - Gunakan aplikasi ini untuk estimasi harga sebelum membeli/menjual mobil bekas.
 """)
 
+# --- Footer
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<div class='footer'>© 2025 Prediksi Harga Mobil Bekas | Dibuat dengan ❤️ menggunakan Streamlit</div>", unsafe_allow_html=True)

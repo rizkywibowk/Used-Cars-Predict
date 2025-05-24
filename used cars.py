@@ -387,5 +387,5 @@ st.info("""
 
 # --- Footer ---
 st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("<div class='footer'>© 2025 Prediksi Harga Mobil Bekas | Dibangun oleh [Nama Anda/Tim Anda] dengan Streamlit</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer'>© 2025 Prediksi Harga Mobil Bekas | Dibangun oleh [Rizky Wibowo Kusumo] dengan Streamlit</div>", unsafe_allow_html=True)
 

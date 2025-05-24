@@ -273,7 +273,7 @@ with st.form("prediksi_form"):
 
 if submitted:
     with st.spinner("🔍 Menganalisis dan Memprediksi Harga..."):
-        current_year_form = pd.Timestamp.now().year # Definisikan di sini jika belum ada
+        current_year_form = pd.Timestamp.now().year
         car_age_input = current_year_form - model_year
         engine_hp_input = extract_hp(engine)
         engine_L_input = extract_L(engine)
@@ -283,9 +283,33 @@ if submitted:
         engine_seg_input_data = {'engine': engine, 'fuel_type': fuel_type}
         engine_seg_input = engine_segment(engine_seg_input_data)
 
+        # --- BUAT DATAFRAME DARI INPUT PENGGUNA UNTUK DITAMPILKAN ---
+        user_input_display = {
+            'Merek': [brand],
+            'Model': [model_in if model_in else "-"], # Tampilkan "-" jika model kosong
+            'Tahun': [model_year],
+            'Jarak Tempuh (mil)': [f"{milage:,}"], # Format dengan koma
+            'Bahan Bakar': [fuel_type],
+            'Transmisi': [transmission],
+            'Deskripsi Mesin': [engine if engine else "-"], # Tampilkan "-" jika deskripsi mesin kosong
+            'Riwayat Kecelakaan': [accident_reported],
+            'Clean Title': [has_clean_title],
+            'Umur Mobil (Tahun)': [car_age_input],
+            'Engine HP (est.)': [f"{engine_hp_input:.1f}" if pd.notna(engine_hp_input) else "N/A"],
+            'Engine Liter (est.)': [f"{engine_L_input:.1f}" if pd.notna(engine_L_input) else "N/A"],
+            'Segmen Mesin (est.)': [engine_seg_input]
+        }
+        df_user_input_display = pd.DataFrame(user_input_display)
+        
+        # Tampilkan detail input pengguna dalam expander
+        with st.expander("📋 Detail Input yang Anda Masukkan untuk Prediksi", expanded=True):
+            st.dataframe(df_user_input_display, use_container_width=True, hide_index=True)
+            # atau st.table(df_user_input_display) jika ingin tampilan tabel statis
+
+        # --- PERSIAPAN INPUT UNTUK MODEL (TETAP SAMA) ---
         input_dict = {
             'car_age': car_age_input,
-            'milage': milage,
+            'milage': milage, # Gunakan nilai milage numerik asli untuk model
             'engine_hp': engine_hp_input if pd.notna(engine_hp_input) else X_train['engine_hp'].mean(),
             'engine_L': engine_L_input if pd.notna(engine_L_input) else X_train['engine_L'].mean(),
             'accident_reported': accident_reported_bin_input,
@@ -306,9 +330,9 @@ if submitted:
                 if col_in_model not in base_features:
                      input_dict[col_in_model] = 0
 
-        input_df = pd.DataFrame([input_dict])[X_train.columns]
+        input_df_for_model = pd.DataFrame([input_dict])[X_train.columns] # DataFrame untuk model
         
-        pred = model.predict(input_df)
+        pred = model.predict(input_df_for_model) # Prediksi menggunakan input_df_for_model
         
         st.markdown(f"<div class='stSuccess'>💰 Estimasi harga mobil bekas Anda: <strong>${pred[0]:,.2f}</strong></div>", unsafe_allow_html=True)
 

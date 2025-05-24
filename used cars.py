@@ -180,4 +180,4 @@ feat_imp = pd.Series(importances, index=features).sort_values(ascending=False).h
 fig2, ax2 = plt.subplots()
 feat_imp.plot(kind='barh', ax=ax2)
 st.pyplot(fig2)
-st.markdown("Fitur yang paling berpengaruh: "
+st.markdown("Fitur yang paling berpengaruh: ")

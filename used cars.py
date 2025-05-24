@@ -46,7 +46,13 @@ body, .main, .stApp {
 '''
 
 st.markdown(f'<style>{css_code}</style>', unsafe_allow_html=True)
+st.markdown("""
+**Sumber Data:**  
+Dataset yang digunakan dalam aplikasi ini diambil dari hasil scraping manual website [cars.com](https://www.cars.com)[1] dan telah diunggah ke Kaggle oleh Taeef Najib pada tautan berikut:  
+[https://www.kaggle.com/datasets/taeefnajib/used-car-price-prediction-dataset/data](https://www.kaggle.com/datasets/taeefnajib/used-car-price-prediction-dataset/data)[2].
 
+Dataset ini berisi data mobil bekas dengan berbagai fitur seperti merek, model, tahun, harga, mileage, tipe bahan bakar, spesifikasi mesin, transmisi, warna, riwayat kecelakaan, dan status dokumen.
+""")
 # --- FUNGSI GLOBAL UNTUK EKSTRAKSI HP DAN LITER ---
 def extract_hp(x):
     if pd.isnull(x): return np.nan
